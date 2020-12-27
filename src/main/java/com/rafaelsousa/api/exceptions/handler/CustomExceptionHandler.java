@@ -5,6 +5,7 @@ import com.rafaelsousa.api.exceptions.InvalidParameterException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -25,7 +26,30 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Override
+    protected ResponseEntity<Object> handleBindException(BindException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
+        return getObjectResponseEntity(ex, headers, status, request);
+    }
+
+    @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
+        return getObjectResponseEntity(ex, headers, status, request);
+    }
+
+    @ExceptionHandler(InvalidParameterException.class)
+    protected ResponseEntity<Object> invalidParameterException(Exception ex, WebRequest request) {
+        ExceptionResponse response = ExceptionResponse
+                .builder()
+                .timestamp(LocalDateTime.now().format(ofPattern("yyyy-MM-dd HH:mm:ss")))
+                .code(BAD_REQUEST.value())
+                .status(BAD_REQUEST)
+                .details("Invalid parameter")
+                .errors(Collections.singletonList(ex.getMessage()))
+                .build();
+
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    private ResponseEntity<Object> getObjectResponseEntity(BindException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
         List<String> errors = new ArrayList<>();
 
         ex.getBindingResult().getFieldErrors().forEach(error -> {
@@ -54,20 +78,6 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
                 .build();
 
         return handleExceptionInternal(ex, response, headers, status, request);
-    }
-
-    @ExceptionHandler(InvalidParameterException.class)
-    protected ResponseEntity<Object> invalidParameterException(Exception ex, WebRequest request) {
-        ExceptionResponse response = ExceptionResponse
-                .builder()
-                .timestamp(LocalDateTime.now().format(ofPattern("yyyy-MM-dd HH:mm:ss")))
-                .code(BAD_REQUEST.value())
-                .status(BAD_REQUEST)
-                .details("Invalid parameter")
-                .errors(Collections.singletonList(ex.getMessage()))
-                .build();
-
-        return new ResponseEntity<>(response, response.getStatus());
     }
 
 }

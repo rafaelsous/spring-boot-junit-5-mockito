@@ -9,6 +9,7 @@ import com.rafaelsousa.api.repository.BooksRepository;
 import com.rafaelsousa.api.service.comum.ComumService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +34,7 @@ public class BooksService {
 
         booksRepository.save(book);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     public List<Book> findAll() {
@@ -54,6 +55,15 @@ public class BooksService {
         }
 
         return ResponseEntity.noContent().build();
+    }
+
+    public ResponseEntity<BookResponseDTO> findByFields(BookRequestDTO dto) {
+        Optional<Book> bookOptional = booksRepository.findByFields(dto);
+
+        return bookOptional.map(book -> ResponseEntity
+                .ok()
+                .body(modelMapper.map(book, BookResponseDTO.class)))
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     public void delete(Book book) {

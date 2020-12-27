@@ -39,4 +39,9 @@ public class BooksController {
         return booksService.findBookByISBN(isbn);
     }
 
+    @GetMapping(value = "/find/fields")
+    public ResponseEntity<BookResponseDTO> findByISBN(@Valid BookRequestDTO dto) {
+        return booksService.findByFields(dto);
+    }
+
 }
